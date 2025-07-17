@@ -5,12 +5,11 @@ import (
 	"time"
 )
 
-type statusRequest int
+type RequestStatus string
 
 const (
-	Pending statusRequest = iota
-	Approved
-	Declined
+	RequestActive   RequestStatus = "active"
+	RequestInactive RequestStatus = "inactive"
 )
 
 type TransferRequests []TransferRequest
@@ -22,7 +21,7 @@ type TransferRequest struct {
 	WithPartner    bool
 	PartnerID      *string
 	DateSubmitted  time.Time
-	Status         statusRequest // "pending (0)", "approved (1)", "declined (2)"
+	Status         RequestStatus // "pending (0)", "approved (1)", "declined (2)"
 }
 
 func validateDormList(preferredDormList []string) ([]string, error) {
@@ -62,7 +61,7 @@ func CreateTransferRequest(studentID string, preferredDormList []string, roomTyp
 		WithPartner:    withPartner,
 		PartnerID:      partnerID,
 		DateSubmitted:  time.Now(),
-		Status:         Pending,
+		Status:         RequestActive,
 	}
 
 	return &newRequest, nil
@@ -72,7 +71,7 @@ func PrintRequests(transferRequests TransferRequests) {
 	fmt.Println("--- Pending prošnje ---")
 
 	for i, request := range transferRequests {
-		if request.Status == Pending {
+		if request.Status == RequestActive {
 			fmt.Printf("Št. prošnje: %d\n", i+1)
 			fmt.Printf("Vlagatelj: %s\n", request.StudentID)
 			fmt.Printf("Izbrani dom(ovi): %v\n", request.PreferredDorms)
