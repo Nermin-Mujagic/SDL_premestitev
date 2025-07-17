@@ -2,6 +2,7 @@ package request
 
 import (
 	"fmt"
+	"slices"
 	"time"
 )
 
@@ -12,12 +13,15 @@ const (
 	RequestInactive RequestStatus = "inactive"
 )
 
+var RoomTypes = []string{"singleBed", "doubleBed", "coupleApartment"}
+
 type TransferRequests []TransferRequest
 
 type TransferRequest struct {
 	StudentID      string
 	PreferredDorms []string // "FDV, Poljane, I,II,III..."
-	RoomType       *string  // "any, full, single, couple"
+	Apartment      bool
+	RoomType       *string // "any, full, single, couple"
 	WithPartner    bool
 	PartnerID      *string
 	DateSubmitted  time.Time
@@ -39,7 +43,7 @@ func validateDormList(preferredDormList []string) ([]string, error) {
 
 }
 
-func CreateTransferRequest(studentID string, preferredDormList []string, roomType *string, partnerID *string) (*TransferRequest, error) {
+func CreateTransferRequest(studentID string, preferredDormList []string, apartment bool, roomType *string, partnerID *string) (*TransferRequest, error) {
 	withPartner := false
 	if partnerID != nil {
 		withPartner = true
@@ -54,10 +58,23 @@ func CreateTransferRequest(studentID string, preferredDormList []string, roomTyp
 		return nil, err
 	}
 
+	var preferredRoom string
+	switch roomType {
+	case nil:
+		preferredRoom = "any"
+	default:
+		if !slices.Contains(RoomTypes, *roomType) {
+			return nil, fmt.Errorf("room type %q is invalid", *roomType)
+		}
+		preferredRoom = *roomType
+
+	}
+
 	newRequest := TransferRequest{
 		StudentID:      studentID,
 		PreferredDorms: dormList,
-		RoomType:       roomType,
+		Apartment:      apartment,
+		RoomType:       &preferredRoom,
 		WithPartner:    withPartner,
 		PartnerID:      partnerID,
 		DateSubmitted:  time.Now(),
