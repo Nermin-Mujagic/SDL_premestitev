@@ -1,6 +1,7 @@
 package request
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -43,12 +44,7 @@ func validateDormList(preferredDormList []string) ([]string, error) {
 
 }
 
-func CreateTransferRequest(studentID string, preferredDormList []string, apartment bool, roomType *string, partnerID *string) (*TransferRequest, error) {
-	withPartner := false
-	if partnerID != nil {
-		withPartner = true
-	}
-
+func CreateTransferRequest(studentID string, preferredDormList []string, apartment bool, roomType *string, withPartner bool, partnerID *string) (*TransferRequest, error) {
 	if studentID == "" {
 		return nil, fmt.Errorf("Student ID %q is invalid", studentID)
 	}
@@ -58,23 +54,28 @@ func CreateTransferRequest(studentID string, preferredDormList []string, apartme
 		return nil, err
 	}
 
-	var preferredRoom string
-	switch roomType {
-	case nil:
-		preferredRoom = "any"
+	switch {
+	case roomType == nil:
+	case *roomType == "":
+		roomType = nil
 	default:
 		if !slices.Contains(RoomTypes, *roomType) {
-			return nil, fmt.Errorf("room type %q is invalid", *roomType)
+			return nil, fmt.Errorf("invalid room type: %q", *roomType)
 		}
-		preferredRoom = *roomType
 
+	}
+
+	if withPartner {
+		if partnerID == nil || *partnerID == "" {
+			return nil, errors.New("partner missing")
+		}
 	}
 
 	newRequest := TransferRequest{
 		StudentID:      studentID,
 		PreferredDorms: dormList,
 		Apartment:      apartment,
-		RoomType:       &preferredRoom,
+		RoomType:       roomType,
 		WithPartner:    withPartner,
 		PartnerID:      partnerID,
 		DateSubmitted:  time.Now(),
