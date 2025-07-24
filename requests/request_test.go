@@ -18,12 +18,12 @@ func TestCreateRequest(t *testing.T) {
 	t.Run("valid dorm", func(t *testing.T) {
 		req, err := CreateTransferRequest(std1, []string{"dom_1"}, false, nil, false, nil)
 		AssertNoError(t, err)
-
 		AssertDeepEqual(t, req.PreferredDorms, []string{"dom_1"})
 	})
 
 	t.Run("invalid dorm", func(t *testing.T) {
 		_, err := CreateTransferRequest(std1, []string{"dom_schmit"}, false, nil, false, nil)
+
 		AssertError(t, err)
 	})
 
@@ -96,9 +96,11 @@ func AssertEqualStrings(t testing.TB, got, want string) {
 }
 
 func AssertError(t testing.TB, got error) {
+	t.Helper()
 	if got == nil {
 		t.Errorf("expected error")
 	}
+	t.Log(got)
 }
 
 func AssertNoError(t testing.TB, got error) {

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -14,7 +15,18 @@ const (
 	RequestInactive RequestStatus = "inactive"
 )
 
-var RoomTypes = []string{"singleBed", "doubleBed", "coupleApartment"}
+var (
+	RoomTypes = []string{"singleBed", "doubleBed", "coupleApartment"}
+)
+
+type RequestValidationError struct {
+	Field   string
+	Message string
+}
+
+func (e RequestValidationError) Error() string {
+	return fmt.Sprintf("validation failed for %s\n%v", e.Field, e.Message)
+}
 
 type TransferRequests []TransferRequest
 
@@ -33,20 +45,25 @@ func validateDormList(preferredDormList []string) ([]string, error) {
 	if len(preferredDormList) == 0 {
 		return []string{"any"}, nil
 	}
+	var invalidDorms []string
 
 	for _, dorm := range preferredDormList {
 		if _, ok := dormList[dorm]; !ok {
-			return nil, fmt.Errorf("Dorm %s is not a valid dorm", dorm)
+			invalidDorms = append(invalidDorms, dorm)
 		}
 	}
 
-	return preferredDormList, nil
+	if len(invalidDorms) > 0 {
+		message := fmt.Sprintf("invalid dorms: %s", strings.Join(invalidDorms, ", "))
+		return nil, RequestValidationError{Field: "Preferred dorms", Message: message}
+	}
 
+	return preferredDormList, nil
 }
 
 func CreateTransferRequest(studentID string, preferredDormList []string, apartment bool, roomType *string, withPartner bool, partnerID *string) (*TransferRequest, error) {
 	if studentID == "" {
-		return nil, fmt.Errorf("Student ID %q is invalid", studentID)
+		return nil, &RequestValidationError{Field: "StudentID", Message: "Cannot be empty"}
 	}
 
 	dormList, err := validateDormList(preferredDormList)
@@ -65,10 +82,9 @@ func CreateTransferRequest(studentID string, preferredDormList []string, apartme
 
 	}
 
-	if withPartner {
-		if partnerID == nil || *partnerID == "" {
-			return nil, errors.New("partner missing")
-		}
+	if withPartner && (partnerID == nil || *partnerID == "") {
+		return nil, errors.New("partner missing")
+
 	}
 
 	newRequest := TransferRequest{
