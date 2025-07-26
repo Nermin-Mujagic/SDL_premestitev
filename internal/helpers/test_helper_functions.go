@@ -15,7 +15,7 @@ func AssertEqual[K comparable](t testing.TB, got, want K) {
 func AssertDeepEqual[K any](t testing.TB, got, want []K) {
 	t.Helper()
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %s, want %s", got, want)
+		t.Errorf("got %v\n want %v", got, want)
 	}
 }
 

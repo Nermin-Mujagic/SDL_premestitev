@@ -44,19 +44,26 @@ type TransferRequest struct {
 func (tr TransferRequest) String() string {
 	var sb strings.Builder
 
-	fmt.Fprintf(&sb, "Request{ID:%d, Student:%s", tr.RequestID, tr.StudentID)
+	fmt.Fprintf(&sb, "\nRequest{ID:%d, Student:%s", tr.RequestID, tr.StudentID)
 
 	if tr.WithPartner && tr.PartnerID != nil {
 		fmt.Fprintf(&sb, ", Partner:%s", *tr.PartnerID)
 	}
 
-	if len(tr.PreferredDorms) > 0 {
+	switch len(tr.PreferredDorms) {
+	case 0:
+		fmt.Fprint(&sb, "\n Dorms: any")
+	case 1:
+		fmt.Fprintf(&sb, "\n Dorms: %s", tr.PreferredDorms[0])
+	default:
 		fmt.Fprintf(&sb, "\n Dorms: %v", tr.PreferredDorms)
 	}
 
 	if tr.RoomType != nil {
-		fmt.Fprintf(&sb, "\n RoomType: %s", *tr.RoomType)
+		fmt.Fprintf(&sb, ", RoomType: %s", *tr.RoomType)
 	}
+
+	fmt.Fprintf(&sb, "}")
 
 	return sb.String()
 
@@ -111,7 +118,7 @@ func CreateTransferRequest(studentID string, preferredDormList []string, apartme
 	r := rand.New(rand.NewSource(47))
 
 	newRequest := TransferRequest{
-		RequestID:      r.Int(),
+		RequestID:      r.Intn(1000),
 		StudentID:      studentID,
 		PreferredDorms: dormList,
 		Apartment:      apartment,
