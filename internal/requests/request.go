@@ -3,6 +3,7 @@ package request
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"slices"
 	"strings"
 	"time"
@@ -28,9 +29,8 @@ func (e RequestValidationError) Error() string {
 	return fmt.Sprintf("validation failed for %s\n%v", e.Field, e.Message)
 }
 
-type TransferRequests []TransferRequest
-
 type TransferRequest struct {
+	RequestID      int
 	StudentID      string
 	PreferredDorms []string // "FDV, Poljane, I,II,III..."
 	Apartment      bool
@@ -39,6 +39,27 @@ type TransferRequest struct {
 	PartnerID      *string
 	DateSubmitted  time.Time
 	Status         RequestStatus // "pending (0)", "approved (1)", "declined (2)"
+}
+
+func (tr TransferRequest) String() string {
+	var sb strings.Builder
+
+	fmt.Fprintf(&sb, "Request{ID:%d, Student:%s", tr.RequestID, tr.StudentID)
+
+	if tr.WithPartner && tr.PartnerID != nil {
+		fmt.Fprintf(&sb, ", Partner:%s", *tr.PartnerID)
+	}
+
+	if len(tr.PreferredDorms) > 0 {
+		fmt.Fprintf(&sb, "\n Dorms: %v", tr.PreferredDorms)
+	}
+
+	if tr.RoomType != nil {
+		fmt.Fprintf(&sb, "\n RoomType: %s", *tr.RoomType)
+	}
+
+	return sb.String()
+
 }
 
 func validateDormList(preferredDormList []string) ([]string, error) {
@@ -87,7 +108,10 @@ func CreateTransferRequest(studentID string, preferredDormList []string, apartme
 
 	}
 
+	r := rand.New(rand.NewSource(47))
+
 	newRequest := TransferRequest{
+		RequestID:      r.Int(),
 		StudentID:      studentID,
 		PreferredDorms: dormList,
 		Apartment:      apartment,
@@ -99,22 +123,4 @@ func CreateTransferRequest(studentID string, preferredDormList []string, apartme
 	}
 
 	return &newRequest, nil
-}
-
-func PrintRequests(transferRequests TransferRequests) {
-	fmt.Println("--- Pending prošnje ---")
-
-	for i, request := range transferRequests {
-		if request.Status == RequestActive {
-			fmt.Printf("Št. prošnje: %d\n", i+1)
-			fmt.Printf("Vlagatelj: %s\n", request.StudentID)
-			fmt.Printf("Izbrani dom(ovi): %v\n", request.PreferredDorms)
-			fmt.Printf("vrsta sobe: %v\n", request.RoomType)
-			if request.WithPartner {
-				fmt.Printf("Z osebo: %s\n", *request.PartnerID)
-			}
-			fmt.Println("-----------------")
-		}
-
-	}
 }
