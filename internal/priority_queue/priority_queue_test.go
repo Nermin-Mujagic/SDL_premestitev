@@ -15,15 +15,20 @@ var (
 func TestAddRequest(t *testing.T) {
 	t.Run("valid add to prio", func(t *testing.T) {
 		prio := emptyPriorityList
-		prio.AddRequest(*genericRequest)
+		err := prio.AddRequest(*genericRequest)
+		helpers.AssertNoError(t, err)
 		expected := PriorityList{*genericRequest}
 		helpers.AssertDeepEqual(t, prio, expected)
 	})
 
 	t.Run("duplicate add to prio", func(t *testing.T) {
 		prio := emptyPriorityList
-		prio.AddRequest(*genericRequest)
-		prio.AddRequest(*genericRequest)
+		err := prio.AddRequest(*genericRequest)
+		helpers.AssertNoError(t, err)
+
+		err = prio.AddRequest(*genericRequest)
+		helpers.AssertError(t, err)
+
 		expected := PriorityList{*genericRequest}
 		helpers.AssertDeepEqual(t, prio, expected)
 

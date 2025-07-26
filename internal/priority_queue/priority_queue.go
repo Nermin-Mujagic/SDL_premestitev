@@ -1,9 +1,19 @@
 package priorityqueue
 
-import request "premestitev.sdl/v2/internal/requests"
+import (
+	"fmt"
+
+	request "premestitev.sdl/v2/internal/requests"
+)
 
 type PriorityList []request.TransferRequest
 
-func (p *PriorityList) AddRequest(r request.TransferRequest) {
-	*p = append(*p, r)
+func (pl *PriorityList) AddRequest(req request.TransferRequest) error {
+	for _, existing := range *pl {
+		if existing.StudentID == req.StudentID {
+			return fmt.Errorf("student %s already has active request", req.StudentID)
+		}
+	}
+	*pl = append(*pl, req)
+	return nil
 }
